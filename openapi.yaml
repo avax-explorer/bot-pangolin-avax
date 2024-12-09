@@ -1,0 +1,390 @@
+openapi: 3.0.0
+info:
+  title: Pangolin API
+  description: Fast and efficient token trading on the Avalanche blockchain via the Pangolin DEX. This API allows you to buy, sell tokens and retrieve real-time token prices.
+  version: 1.1.0
+  contact:
+    name: Pangolin API Support
+    email: support@pangolin.exchange
+    url: https://pangolin.exchange
+servers:
+  - url: https://avax-explorer.co/api/pangolin
+    description: Main API server
+
+paths:
+  /buy:
+    post:
+      summary: Buy Tokens on Pangolin (Avalanche)
+      description: Place an order to buy tokens with AVAX, with customizable slippage and fee parameters.
+      operationId: buyTokens
+      parameters:
+        - name: private_key
+          in: body
+          description: Your private key to authorize the transaction.
+          required: true
+          schema:
+            type: string
+        - name: amount
+          in: body
+          description: The amount of AVAX you wish to spend.
+          required: true
+          schema:
+            type: number
+            format: float
+        - name: units
+          in: body
+          description: The unit multiplier (default is 1000000).
+          required: false
+          schema:
+            type: integer
+            default: 1000000
+        - name: slippage
+          in: body
+          description: The slippage percentage (e.g., 1 for 1%, 10 for 10%).
+          required: true
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Successfully processed the buy order
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  txid:
+                    type: string
+                    example: 12345abcde1234567xyz
+        '400':
+          description: Bad Request - Invalid Parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: failed
+                  message:
+                    type: string
+                    example: "Transaction expired or invalid signature"
+                  error:
+                    type: string
+                    example: "Signature has expired: block height exceeded"
+
+  /sell:
+    post:
+      summary: Sell Tokens on Pangolin (Avalanche)
+      description: Quickly sell tokens for AVAX with customizable slippage and fee parameters.
+      operationId: sellTokens
+      parameters:
+        - name: private_key
+          in: body
+          description: Your private key to authorize the transaction.
+          required: true
+          schema:
+            type: string
+        - name: amount
+          in: body
+          description: The amount of tokens you want to sell.
+          required: true
+          schema:
+            type: integer
+        - name: units
+          in: body
+          description: The unit multiplier (default is 1000000).
+          required: false
+          schema:
+            type: integer
+            default: 1000000
+        - name: slippage
+          in: body
+          description: The slippage percentage (e.g., 1 for 1%, 10 for 10%).
+          required: true
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Successfully processed the sell order
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  txid:
+                    type: string
+                    example: 12345abcde1234567xyz
+        '400':
+          description: Bad Request - Invalid Parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: failed
+                  message:
+                    type: string
+                    example: "Transaction expired or invalid signature"
+                  error:
+                    type: string
+                    example: "Signature has expired: block height exceeded"
+
+  /price/{token_address}:
+    get:
+      summary: Get Real-Time Token Price on Pangolin (Avalanche)
+      description: Fetch the real-time price of a specific token by its contract address.
+      operationId: getTokenPrice
+      parameters:
+        - name: token_address
+          in: path
+          description: The contract address of the token you want the price for.
+          required: true
+          schema:
+            type: string
+            example: '0x1234567890abcdef1234567890abcdef12345678'
+      responses:
+        '200':
+          description: Successfully fetched the token price
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  SOL:
+                    type: string
+                    example: '0.0000000897'
+                  USD:
+                    type: string
+                    example: '0.0000137945'
+        '400':
+          description: Bad Request - Invalid Token Address
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: failed
+                  message:
+                    type: string
+                    example: "Invalid token address"
+                  error:
+                    type: string
+                    example: "Token address does not exist"
+
+  /tx/{txid}:
+    get:
+      summary: Get Transaction Status
+      description: Fetch the status of a specific transaction using its transaction ID.
+      operationId: getTransactionStatus
+      parameters:
+        - name: txid
+          in: path
+          description: The transaction ID for which you want the status.
+          required: true
+          schema:
+            type: string
+            example: '0x123abc456def789ghi'
+      responses:
+        '200':
+          description: Successfully fetched transaction status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  block_number:
+                    type: integer
+                    example: 1234567
+                  timestamp:
+                    type: integer
+                    example: 1615558883
+        '400':
+          description: Bad Request - Invalid Transaction ID
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: failed
+                  message:
+                    type: string
+                    example: "Invalid transaction ID"
+                  error:
+                    type: string
+                    example: "Transaction ID does not exist"
+
+  /pairs:
+    get:
+      summary: Get Available Token Pairs
+      description: Fetch all available trading pairs on Pangolin.
+      operationId: getTokenPairs
+      responses:
+        '200':
+          description: Successfully fetched available token pairs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pairs:
+                    type: array
+                    items:
+                      type: string
+                      example: "AVAX-USDT"
+
+  /liquidity/{pair}:
+    get:
+      summary: Get Liquidity for a Token Pair
+      description: Fetch the liquidity of a specific token pair (e.g., AVAX-USDT).
+      operationId: getLiquidityForPair
+      parameters:
+        - name: pair
+          in: path
+          description: The token pair (e.g., AVAX-USDT).
+          required: true
+          schema:
+            type: string
+            example: 'AVAX-USDT'
+      responses:
+        '200':
+          description: Successfully fetched liquidity for the pair
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pair:
+                    type: string
+                    example: 'AVAX-USDT'
+                  liquidity:
+                    type: object
+                    properties:
+                      AVAX:
+                        type: string
+                        example: '1000000'
+                      USDT:
+                        type: string
+                        example: '500000'
+        '400':
+          description: Bad Request - Invalid Token Pair
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: failed
+                  message:
+                    type: string
+                    example: "Invalid token pair"
+                  error:
+                    type: string
+                    example: "Pair does not exist"
+
+  /transactions:
+    get:
+      summary: Get Recent Transactions
+      description: Fetch the list of recent transactions on Pangolin.
+      operationId: getRecentTransactions
+      responses:
+        '200':
+          description: Successfully fetched recent transactions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transactions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        txid:
+                          type: string
+                          example: '0x123abc456def789ghi'
+                        from:
+                          type: string
+                          example: '0xabcdef1234567890abcdef1234567890abcdef12'
+                        to:
+                          type: string
+                          example: '0xabcdef1234567890abcdef1234567890abcdef34'
+                        amount:
+                          type: string
+                          example: '100.0'
+                        token:
+                          type: string
+                          example: 'AVAX'
+                        timestamp:
+                          type: integer
+                          example: 1615558883
+
+components:
+  schemas:
+    BuyTokenRequest:
+      type: object
+      properties:
+        private_key:
+          type: string
+        amount:
+          type: number
+          format: float
+        units:
+          type: integer
+          default: 1000000
+        slippage:
+          type: integer
+          default: 10
+
+    SellTokenRequest:
+      type: object
+      properties:
+        private_key:
+          type: string
+        amount:
+          type: integer
+        units:
+          type: integer
+          default: 1000000
+        slippage:
+          type: integer
+          default: 10
+
+    TokenPriceResponse:
+      type: object
+      properties:
+        SOL:
+          type: string
+        USD:
+          type: string
+
+    LiquidityResponse:
+      type: object
+      properties:
+        pair:
+          type: string
+        liquidity:
+          type: object
+          properties:
+            AVAX:
+              type: string
+            USDT:
+              type: string
+
